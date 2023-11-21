@@ -43,10 +43,10 @@ Wat plagiaat is wordt beschreven in het Studentenstatuut (artikel 5.6): "Plagiaa
 |5|8 jan|Natural Language Processing|
  
 ### Deadlines inleveren
-opgaven week 1: 28 november
-opgaven week 2: 5 december
-opgaven week 3: 19 december
-opgaven week 4: 9 januari
-opgaven week 5: 23 januari
+- opgaven week 1: 28 november
+- opgaven week 2: 5 december
+- opgaven week 3: 19 december
+- opgaven week 4: 9 januari
+- opgaven week 5: 23 januari
 
 In de week van 8 januari zijn er extra assessments, deze kunnen ook worden gebruikt voor herkansingen.
