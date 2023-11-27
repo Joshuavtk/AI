@@ -8,6 +8,8 @@ PATH_C  = 'lightblue'
 FINAL_C = 'blue'
 START_C = '#C7F464'
 GOAL_C  = 'yellow'
+FRONTIER_C = 'purple'
+CURRENT_C = 'green'
 
 # grid size
 START = (0, 0) # try to modify the start position!
