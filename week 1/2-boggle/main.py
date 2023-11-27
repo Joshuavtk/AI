@@ -1,5 +1,6 @@
 import random
 import time
+import os
 
 
 test_bord = [
@@ -12,16 +13,19 @@ test_bord = [
 def generate_board(n):
     return [[chr(97 + random.randint(0,25)) for j in range(n)] for i in range(n)]
 
-f = open("words_EN.txt", "r")
+f = open(os.path.dirname(os.path.abspath(__file__)) + "\\words_EN.txt", "r")
 dictionary = [row[:-1] for row in f]
 total_letter_count = sum([len(word) for word in dictionary])
-print(total_letter_count/len(dictionary))
+print("Total amount of words:", len(dictionary))
+print("Average characters per word:", total_letter_count/len(dictionary))
 
-board = generate_board(100)
+# Generate random board with size N
+board_size = 100
+print("Generating board with size(N):", board_size)
+board = generate_board(board_size)
 
 class Tree(object):
-    "Generic tree node."
-    def __init__(self, name='root', children=None, is_word=False):
+    def __init__(self, name='$', children=None, is_word=False):
         self.name = name
         self.children = []
         self.is_word = is_word
@@ -59,8 +63,13 @@ class Tree(object):
         self.children.append(node)
 
 def make_tree():
+    """
+        tijdscomplexiteit van het maken van de woordenboek boom is O(w*k)
+        waarbij w het aantal woorden in het woordenboek is
+        en k de gemiddelde lengte van de woorden
+    """
     count = 0
-    f = open("words_EN.txt", "r")
+    f = open(os.path.dirname(os.path.abspath(__file__)) + "\\words_EN.txt", "r")
     dictionary = [row[:-1] for row in f]
     root = Tree('$')
     for word in dictionary:
@@ -75,7 +84,7 @@ def make_tree():
                 current.add_child(child)
                 count += 1
                 current = child
-    print(f"count1:{count}")
+    print(f"Amount of nodes: {count}")
     return root
 
 
@@ -86,7 +95,7 @@ print("finish making tree")
 
 end = time.time()
 
-print(end - start)
+print("Time spent making tree:", end - start)
 
 
 start = time.time()
@@ -101,43 +110,11 @@ def check_if_in_dictionary(word):
         new_tree = current[character]
         if new_tree:
             current = new_tree
-        # if character in current.children:
-        #     idx = current.children.index(character)
-        #     current = current.children[idx]
         else:
             return False, False
         
     return current.is_word, 0 < len(current.children)
 
-# assert check_if_in_dictionary("xyzs") == (False, False)
-# assert check_if_in_dictionary("huis") == (True, True)
-# assert check_if_in_dictionary("aardi") == (False, True)
-# assert check_if_in_dictionary("aardige") == (True, False)
-
-
-def walk_through_board(board):
-    height, width = len(board), len(board[0])
-    
-    global root
-
-    for y in range(height):
-        for x in range(width):
-            visited = set()
-            stack = list()
-
-            stack.append((x, y))
-            # current_letter = board[y][x]
-            # current_tree = root[current_letter]
-
-            while len(stack) > 0:
-                x, y = stack.pop()
-                
-                neighbours = get_neighbours(board, x, y)
-                for neighbour in neighbours:
-                    stack.append(neighbour)
-
-            print(visited)
-            
 def get_neighbours(board, x, y):
     height, width = len(board), len(board[0]) 
     return [
@@ -153,6 +130,13 @@ def get_letter_from_board(x,y, board):
     return board[y][x].lower()    
 
 def walk_through_board_recursive(board, tree, x, y, word = "", visited = set()):
+    """
+        Time complexity van recursief doorlopen puzzel is worst case O(n^2 * 4^k)
+        Waarbij n^2 het aantal cellen is van het bord 
+        En k het gemiddeld aantal letters per woord
+        en 4 is de branching factor 
+        In de berekening wordt er niet rekening mee gehouden dat het wel geldige prefixes moeten zijn en dat dat heel gauw heel onwaarschijnlijk wordt. 
+    """
     if tree.is_word:
         global found_words
         found_words.add(word)
@@ -166,29 +150,19 @@ def walk_through_board_recursive(board, tree, x, y, word = "", visited = set()):
             visited.add(key)
             walk_through_board_recursive(board, new_tree, x, y, word + get_letter_from_board(x,y,board), visited)
             visited.remove(key)
-    
-            
-
-# board = test_bord
-
-# print(root['a'])
             
 height, width = len(board), len(board[0])
 for y in range(height):
     for x in range(width):
         current_letter = get_letter_from_board(x,y,board)
         current_tree = root[current_letter]
-        # print(current_letter)
-        # print(current_tree)
         if current_tree:
             walk_through_board_recursive(board, current_tree, x, y, word=current_letter)
     
-            
 
-# print(get_letter_from_board(1,2,test_bord))
     
 end = time.time()
 
-print(end - start)
+print("Time spent solving puzzle:", end - start)
 
-print(found_words)
+print("Amount of unique words found:", len(found_words))
