@@ -46,12 +46,52 @@ def neighbors(state):
 
 def heuristic(state):
     # input is a board (list), returns an (optimistic) estimate of cost to reach the goal state.
-    pass
+    N = len(state) ** 0.5
+    total_distance = 0
+    for i, e in enumerate(state):
+        if e != 0:
+            current_row, current_col = divmod(i, N)
+            target_row, target_col = divmod(e - 1, N)
+            distance = int(abs(current_row - target_row) + abs(current_col - target_col))
+            total_distance += distance
+    return total_distance
 
-def astar(start):
+
+def astar(start, goal):
     # input is a start state (list), returns the path to the goal state
     # path is a dictionary tuple_state => tuple_parent_state
-    return  {tuple_goal:()}, 0 # dummy path to get it running...
+    heap = PriorityQueue()
+    path = dict()
+    cost = dict()
+    visited = set() 
+
+    path[tuple(start)] = None
+    cost[tuple(start)] = 0
+    heap.put(start, 0)
+
+    count = 0
+    while not heap.empty():
+        count += 1
+        current = heap.get()
+
+        if tuple(current) == goal:
+            break
+        
+        visited.add(tuple(current))
+        succesors = neighbors(current)
+        for s in succesors:
+            new_cost = cost[tuple(current)] + 1
+            if tuple(s) not in visited or new_cost < cost[tuple(s)]:
+                priority = new_cost + heuristic(s)
+                heap.put(s, priority)
+                path[tuple(s)] = tuple(current)
+                cost[tuple(s)] = new_cost
+                visited.add(tuple(s))
+
+    print("total iterations:", count)
+    print("puzzles in memory:", count + len(heap.elements))
+
+    return path, cost[tuple(goal)]
 
 def display(state):
     # input is state (tuple), returns a string representation for printing
@@ -93,6 +133,6 @@ N = int(SIZE**0.5) # size of row or column, e.g. 3 or 4
 
 tuple_goal = tuple(to_list(g))  # goal state as a tuple, to to check if we're done
 
-path, cost = astar(start)
+path, cost = astar(start, tuple_goal)
 print("nr states visited:", cost)
 print_path(path)
