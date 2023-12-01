@@ -72,26 +72,53 @@ def NN(cities):
     return tour
 
 def two_opt(cities):
-    visited = set()
+    # visited = set()
     tour = NN(cities)
     N = len(tour)
     # print(tour)
-
-    for i in range(1, N):
-        line1 = (tour[i - 1].x, tour[i - 1].y, tour[i].x, tour[i].y)
+    # i = 0
+    # while i < N:
+    for i in range(0, N):
+        # line1 = (tour[i - 1].x, tour[i - 1].y, tour[i].x, tour[i].y)
         line1_revised = [tour[i-1], tour[i]]
-        for j in range(i + 1, N):
-            line2 = (tour[j - 1].x, tour[j - 1].y, tour[j].x, tour[j].y)
+        for j in range(0, N):
+            # line2 = (tour[j - 1].x, tour[j - 1].y, tour[j].x, tour[j].y)
             if tour[j] not in line1_revised and tour[j - 1] not in line1_revised and check_line_intersection_with_orientation_test((tour[i - 1], tour[i]), (tour[j - 1], tour[j])):
-                print(line1, line2, tour[j], tour[j] in line1_revised, tour[j - 1] in line1_revised)
-                tour[i], tour[j] = tour[j], tour[i]
+                # print(line1, line2, tour[j], tour[j] in line1_revised, tour[j - 1] in line1_revised)
+                start = i
+                end = j
+                if i > j:
+                    start = j 
+                    end = i
+                
+                # if False:
+                #     print("Found something:")
+                #     print(tour[:start])
+                #     print("1:")
+                #     print(tour[end:])
+                #     print("2:")
+                #     print(tour[start:end])
+                #     print("3:")
+                #     print(tour[start:end][::-1])
+                #     print("Before:")
+                #     print(tour)
+                #     print("After:")
+                tour[start:end] = tour[start:end][::-1]
+
+                # i -= 2
+                # j -= 1
+                # print(tour)
+                # tour[i], tour[j] = tour[j], tour[i]
                 # [a,b,c,d,e,f]
                 # [ab, ef]
                 # [af, eb]
-                break
+                # break
 
+        # i += 1
+            
+            
+    # print(tour[0], tour[-1])
     return tour
-
 
 
 def try_all_tours(cities):
@@ -139,7 +166,7 @@ def plot_tsp(algorithm, cities):
 
 # give a demo with 10 cities using brute force
 # plot_tsp(try_all_tours, make_cities(10))
-cities = make_cities(25)
+cities = make_cities(500)
 # plot_tsp(try_all_tours, cities)
 plot_tsp(NN, cities)
 plot_tsp(two_opt, cities)
@@ -163,3 +190,10 @@ plot_tsp(two_opt, cities)
 #             if the slopes are 0, they intersect
 #             
 #             return false
+#
+# d:
+# NN-algoritme 500 steden lengte: 20914.6
+# NN-algoritme met 2-opt lengte: 19106.4 
+# Ongeveer 9,4% beter in 0.1 tot 0.2 sec (runtime verschilt nog wel eens)
+#
+# e: N^2 tijdscomplexiteit
