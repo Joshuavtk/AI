@@ -54,8 +54,8 @@ class MainApp(tk.Frame):
         self.update_idletasks() # redraw widgets
         
     def do_move(self):
-        direction = model.get_random_move()
-        #direction = model.get_expectimax_move(self.board)
+        # direction = model.get_random_move()
+        direction = model.get_expectimax_move(self.board)
         if direction:
             self.board = model.play_move(self.board, direction)
             self.update_grid_cells()            # redraw grid

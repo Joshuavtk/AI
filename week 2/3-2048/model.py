@@ -189,6 +189,86 @@ def get_random_move():
     return random.choice(list(MERGE_FUNCTIONS.keys()))
 
 def get_expectimax_move(b):
-    pass
+    DEPTH = 8
+    moves = give_moves(b)
+    two_odds, four_odds = calculate_odds(b)
+
+    if len(moves) == 0:
+        return False
+    
+    bestMove = moves[0]
+    bestScore = -math.inf
+    for move in moves:
+        score = 0 
+        new_b = MERGE_FUNCTIONS[move](b)
+        for y, x in itertools.product(range(4), range(4)):
+            if b[y][x] != 0:
+                continue
+            new_b[y][x] = 2
+            score = score + expectimax(new_b, two_odds[y][x], DEPTH)
+            new_b[y][x] = 4
+            score = score + expectimax(new_b, four_odds[y][x], DEPTH)
+            new_b[y][x] = 0
+            print(score)
+        if score > bestScore:
+            bestScore = score
+            bestMove = move
+    
+    return bestMove
+
+
+def expectimax(b, P, depth):
+    zeros = count_zeros(b)
+
+    if depth == 0 or P < 0.05 or zeros == 0:
+        score = sum([sum(row) for row in b])
+        return score * (zeros + 1) * P
+
+    moves = give_moves(b)   
+    two_odds, four_odds = calculate_odds(b)
+
+    score = 0
+    count = 0
+    for move in moves:
+        new_b = MERGE_FUNCTIONS[move](b)
+        for y, x in itertools.product(range(4), range(4)):
+            if b[y][x] != 0:
+                continue
+            new_b[y][x] = 2
+            score = score + expectimax(new_b, two_odds[y][x] * P, depth - 1)
+            new_b[y][x] = 4
+            score = score + expectimax(new_b, four_odds[y][x] * P, depth - 1)
+            new_b[y][x] = 0
+            count += 2
+                
+    return score / count
+
+def count_zeros(b):
+    zeros = 0
+    for y, x in itertools.product(range(4), range(4)):
+        if b[y][x] != 0:
+            continue
+        zeros += 1
+    return zeros
+    
+def calculate_odds(b):
+    two_odds = [[0,0,0,0] for _ in range(4)]
+    four_odds = [[0,0,0,0] for _ in range(4)]
+    
+    zeros = count_zeros(b)
+
+    if zeros == 0:
+        return two_odds, four_odds
+
+    for y, x in itertools.product(range(4), range(4)):
+        if b[y][x] != 0: 
+            continue
+        two_odds[y][x] = 0.9 / zeros
+        four_odds[y][x] = 0.1 / zeros
+
+    return two_odds, four_odds
+    
+
+
 
 #test()
