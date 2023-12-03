@@ -189,9 +189,9 @@ def get_random_move():
     return random.choice(list(MERGE_FUNCTIONS.keys()))
 
 def get_expectimax_move(b):
-    DEPTH = 8
+    DEPTH = 6
     moves = give_moves(b)
-    two_odds, four_odds = calculate_odds(b)
+    zeros = count_zeros(b)
 
     if len(moves) == 0:
         return False
@@ -205,11 +205,10 @@ def get_expectimax_move(b):
             if b[y][x] != 0:
                 continue
             new_b[y][x] = 2
-            score = score + expectimax(new_b, two_odds[y][x], DEPTH)
+            score = score + expectimax(new_b, 0.9 / zeros, DEPTH)
             new_b[y][x] = 4
-            score = score + expectimax(new_b, four_odds[y][x], DEPTH)
+            score = score + expectimax(new_b, 0.1 / zeros, DEPTH)
             new_b[y][x] = 0
-            # print(score)
         if score > bestScore:
             bestScore = score
             bestMove = move
@@ -220,7 +219,7 @@ def get_expectimax_move(b):
 def expectimax(b, P, depth):
     zeros = count_zeros(b)
 
-    if depth == 0 or P < 0.05 or zeros == 0:
+    if depth == 0 or P < 0.01 or zeros == 0:
         score = sum([sum(row) for row in b])
         return score * zeros * P
 
@@ -249,23 +248,6 @@ def count_zeros(b):
             continue
         zeros += 1
     return zeros
-    
-def calculate_odds(b):
-    two_odds = [[0,0,0,0] for _ in range(4)]
-    four_odds = [[0,0,0,0] for _ in range(4)]
-    
-    zeros = count_zeros(b)
-
-    if zeros == 0:
-        return two_odds, four_odds
-
-    for y, x in itertools.product(range(4), range(4)):
-        if b[y][x] != 0: 
-            continue
-        two_odds[y][x] = 0.9 / zeros
-        four_odds[y][x] = 0.1 / zeros
-
-    return two_odds, four_odds
     
 
 
