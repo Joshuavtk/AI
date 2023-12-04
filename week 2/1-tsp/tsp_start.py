@@ -136,7 +136,7 @@ def plot_tsp(algorithm, cities):
 
 # give a demo with 10 cities using brute force
 # plot_tsp(try_all_tours, make_cities(10))
-cities = make_cities(4000)
+cities = make_cities(500)
 # plot_tsp(try_all_tours, cities)
 plot_tsp(NN, cities)
 plot_tsp(two_opt, cities)

@@ -31,6 +31,7 @@ This representation has two useful properties:
 """
 import random
 import math
+import time
 
 # The black and white pieces represent the two players.
 EMPTY, BLACK, WHITE, OUTER = '.', '@', 'o', '?'
@@ -42,6 +43,18 @@ UP, DOWN, LEFT, RIGHT = -10, 10, -1, 1
 UP_RIGHT, DOWN_RIGHT, DOWN_LEFT, UP_LEFT = -9, 11, 9, -11
 # in total 8 directions.
 DIRECTIONS = (UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT)
+# search constants
+MAX_DEPTH = 4
+WEIGHTS = [
+    [20, -3, 11, 8, 8, 11, -3, 20],
+    [-3, -7, -4, 1, 1, -4, -7, -3],
+    [11, -4, 2, 2, 2, 2, -4, 11],
+    [8, 1, 2, -3, -3, 2, 1, 8],
+    [8, 1, 2, -3, -3, 2, 1, 8],
+    [11, -4, 2, 2, 2, 2, -4, 11],
+    [-3, -7, -4, 1, 1, -4, -7, -3],
+    [20, -3, 11, 8, 8, 11, -3, 20],
+]
 
 def squares():
     # list all the valid squares on the board.
@@ -72,6 +85,7 @@ def print_board(board):
 
     rep = rep.replace(" o", "⚪")
     rep = rep.replace(" @", "⚫")
+
     return rep
 
 # -----------------------------------------------------------------------------
@@ -158,34 +172,42 @@ def any_legal_move(player, board):
 # - Apply it to the board.
 # - Switch players. If the game is over, get the final score.
 
-def play(black_strategy, white_strategy):
+def play(black_strategy, white_strategy, logging=True):
     # play a game of Othello and return the final board and score
     board = initial_board()
     prev_player = current_player = BLACK
     strategies = {BLACK: black_strategy, WHITE: white_strategy}
     while current_player := next_player(board, prev_player):
-        print(print_board(board))
-        print(score(BLACK, board), "IS MINIMAX SCORE")
+        if logging:
+            tic = time.perf_counter()
+            print(print_board(board))
+            print("CALCULATED SCORE FOR BLACK:", score(BLACK, board) - score(WHITE, board))
         move = get_move(strategies[current_player], current_player, board)
-        print("PLAYER", PLAYERS[current_player].upper() + "'S TURN. CHOOSES:", move)
+        if logging:
+            toc = time.perf_counter()
+            print("PLAYER", PLAYERS[current_player].upper() + "'S TURN. CHOOSES:", move, f"in {toc - tic:0.4f} seconds")
         board = make_move(move, current_player, board)
         prev_player = current_player
 
+    if logging:
+        print("\n")
+        print("\n")
+        print(print_board(board))
+    winner = prev_player
+    if score(prev_player, board) < score(opponent(prev_player), board):
+        winner = opponent(prev_player)
     
-    print("\n")
-    print("\n")
-    print(print_board(board))
-    if score(prev_player, board):
-        print("GAME FINISHED!", PLAYERS[prev_player].upper(), "WINS")
-    else:
-        print("GAME FINISHED!", PLAYERS[opponent(prev_player)].upper(), "WINS")
+    if logging:
+        print("POINTS:", score(winner, board) - score(opponent(winner), board))
+        print("GAME FINISHED!", PLAYERS[winner].upper(), "WINS")
+    return PLAYERS[winner]
         
 
 def next_player(board, prev_player):
     # which player should move next?  Returns None if no legal moves exist
-    next_player = opponent(prev_player)
-    if any_legal_move(next_player, board):
-        return next_player
+    current_player = opponent(prev_player)
+    if any_legal_move(current_player, board):
+        return current_player
     elif any_legal_move(prev_player, board):
         return prev_player
     return None
@@ -195,27 +217,12 @@ def get_move(strategy, player, board):
     return strategy(player, board)
 
 def score(player, board):
-    # compute player's score (number of player's pieces mi
-    # nus opponent's)
-    opponent(player)
+    # compute player's score (number of player's pieces minus opponent's)
     player_pieces = 0
-    opponent_pieces = 0
-
-    your_piece = "@"
-    opponent_piece = "o"
-    if player == WHITE:
-        your_piece, opponent_piece = opponent_piece, your_piece
-         
     for square in squares():
-        if board[square] == your_piece:
+        if board[square] == player:
             player_pieces += 1
-        elif board[square] == opponent_piece:
-            opponent_pieces += 1
-            
-    # print(player_pieces, "Your pieces")
-    # print(opponent_pieces, "Opponent pieces")
-
-    return player_pieces - opponent_pieces
+    return player_pieces
 
 # Play strategies
 
@@ -224,9 +231,21 @@ def get_minimax_move(player, board):
     bestMove = moves[0]
     bestScore = -math.inf
     for move in moves:
-        
         new_board = make_move(move, player, board[::])
-        score = minimax(new_board, player, 4, False)
+        score = minimax(new_board, opponent(player), 3, False)
+        if score > bestScore:
+            bestScore = score
+            bestMove = move
+
+    return bestMove
+
+def get_negamax_move(player, board):
+    moves = legal_moves(player, board)
+    bestMove = moves[0]
+    bestScore = -math.inf
+    for move in moves:
+        new_board = make_move(move, player, board[::])
+        score = -negamax(new_board, player, MAX_DEPTH)
         if score > bestScore:
             bestScore = score
             bestMove = move
@@ -236,13 +255,17 @@ def get_minimax_move(player, board):
 def get_random_move(player, board):
     return random.choice(legal_moves(player, board))
 
-def get_human_move(player, board):
-    pass
-
 # Algorithms
 
 def board_heuristic_value(board, player):
-    return score(player, board)
+    player_weights = 0
+    for square in squares():
+        x = square % 10
+        y = square // 10
+        if board[square] == player:
+            player_weights += WEIGHTS[y-1][x-1]
+
+    return player_weights 
 
 def minimax(board, player, depth=4, maximizing=True, alpha=-math.inf, beta=math.inf):
     if depth == 0 or any_legal_move(player, board) == None:
@@ -250,20 +273,67 @@ def minimax(board, player, depth=4, maximizing=True, alpha=-math.inf, beta=math.
     
     if maximizing:
         score = -math.inf
-        for move in legal_moves(player, board):
+        moves = legal_moves(player, board)
+        for move in moves:
             new_board = make_move(move, player, board[::])
-            score = max(score, minimax(new_board, player, depth-1, not maximizing))
+            score = max(score, minimax(new_board, opponent(player), depth-1, not maximizing, alpha, beta))
             alpha = max(score, alpha)
             if alpha >= beta:
                 break
     else: # Minimize
         score = math.inf
-        for move in legal_moves(opponent(player), board):
-            new_board = make_move(move, opponent(player), board[::])
-            score = min(score, minimax(new_board, player, depth-1, not maximizing))
+        moves = legal_moves(player, board)
+        for move in moves:
+            new_board = make_move(move, player, board[::])
+            score = min(score, minimax(new_board, opponent(player), depth-1, not maximizing, alpha, beta))
             beta = min(score, beta)
             if beta <= alpha:
                 break
     return score
 
-play(get_minimax_move, get_random_move)
+def negamax(board, prev_player, depth=4, alpha=-math.inf, beta=math.inf):
+    current_player = next_player(board, prev_player)
+
+    if current_player is None:
+        return (score(opponent(prev_player), board) - score(prev_player, board)) * 10000
+
+    if depth == 0:
+        return board_heuristic_value(board, opponent(prev_player)) - board_heuristic_value(board, prev_player)
+
+    if current_player == prev_player:
+        return -negamax(board, current_player, depth - 1, -beta, -alpha)
+
+    moves = legal_moves(current_player, board)
+    for move in moves:
+        new_board = make_move(move, current_player, board[::])
+        alpha = max(alpha, -negamax(new_board, current_player, depth - 1, -beta, -alpha))
+        if alpha >= beta:
+            break
+
+    return alpha
+
+play(get_negamax_move, get_random_move)
+
+def get_winrate_over_multiple_matches(matches = 100):
+    # Helper function to check winrate of algorithm over many matches
+    wins = 0
+
+    for i in range(matches):
+        # Insert testing algorithms here
+        winner = play(get_negamax_move, get_random_move, False)
+        if winner == PLAYERS[BLACK]:
+            wins += 1
+        print("game", i + 1, "won by", winner)
+        
+    print("wins:", wins, "losses:", matches-wins, "winrate:", (wins / matches) * 100, "%")
+
+
+# get_winrate_over_multiple_matches(20)
+
+# Vragen:
+# C: Het aantal stenen veranderd tijdens het othello spel heel erg, en een zet die veel stenen winst boekt is niet gelijk een goede zet omdat de tegenstander het misschien weer makkelijk terug kan krijgen.
+# D: Met een diepte van 4 berekent negamax alle zetten binnen 2 seconden.
+# F: Wij vinden, gemiddeld minder dan 3 seconden over een zet nadenken, acceptabel. Hij heeft een acceptabele performance bij een diepte van 4. 
+# - Met een transpositietabel zou de performance een stuk beter kunnen zijn omdat dan bepaalde states niet opnieuw bezocht hoeven worden. 
+# - Gebruik van bitboards om sneller legale zetten op te sporen. 
+# - Matrix-vermenigvuldigingen gebruiken bij het berekenen van heuristics.
