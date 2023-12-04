@@ -189,57 +189,57 @@ def get_random_move():
     return random.choice(list(MERGE_FUNCTIONS.keys()))
 
 def get_expectimax_move(b):
-    DEPTH = 6
     moves = give_moves(b)
-    zeros = count_zeros(b)
 
     if len(moves) == 0:
         return False
     
     bestMove = moves[0]
-    bestScore = -math.inf
+    bestScore = 0
     for move in moves:
-        score = 0 
         new_b = MERGE_FUNCTIONS[move](b)
-        for y, x in itertools.product(range(4), range(4)):
-            if b[y][x] != 0:
-                continue
-            new_b[y][x] = 2
-            score = score + expectimax(new_b, 0.9 / zeros, DEPTH)
-            new_b[y][x] = 4
-            score = score + expectimax(new_b, 0.1 / zeros, DEPTH)
-            new_b[y][x] = 0
+        score = expectimax(new_b, 6, False)
         if score > bestScore:
             bestScore = score
             bestMove = move
-    
     return bestMove
 
+weights = [[32768,16384,8192,4096],[256,512,1024,2048],[128,64,32,16],[1,2,4,8]]
 
-def expectimax(b, P, depth):
+def evaluate_board(b):
+    return sum([math.log2((b[y][x]) - 1) * b[y][x] * weights[y][x] for y, x in itertools.product(range(4), range(4)) if b[y][x] != 0])
+
+def expectimax(b, depth, player, table=dict()):
+    key = tuple([tuple(row) for row in b])
+
+    if key in table:
+        return table[key]
+
+    moves = give_moves(b)
     zeros = count_zeros(b)
 
-    if depth == 0 or P < 0.01 or zeros == 0:
-        score = sum([sum(row) for row in b])
-        return score * zeros * P
-
-    moves = give_moves(b)   
-
+    if depth == 0:
+        return evaluate_board(b)
+    
     score = 0
-    count = 0
-    for move in moves:
-        new_b = MERGE_FUNCTIONS[move](b)
+    if player:
+        for move in moves:
+            new_b = MERGE_FUNCTIONS[move](b)
+            score = max(score, expectimax(new_b, depth - 1, False, table))
+    else:
         for y, x in itertools.product(range(4), range(4)):
             if b[y][x] != 0:
                 continue
-            new_b[y][x] = 2
-            score = score + expectimax(new_b, 0.9 / zeros * P, depth - 1)
-            new_b[y][x] = 4
-            score = score + expectimax(new_b, 0.1 / zeros * P, depth - 1)
-            new_b[y][x] = 0
-            count += 2
-                
-    return score / count
+            b[y][x] = 2
+            score += (0.9 / zeros) * expectimax(b, depth - 1, True, table)
+            b[y][x] = 4
+            score += (0.1 / zeros) * expectimax(b, depth - 1, True, table)
+            b[y][x] = 0
+
+    table[key] = score
+
+    return score
+
 
 def count_zeros(b):
     zeros = 0
