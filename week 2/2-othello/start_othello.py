@@ -29,6 +29,8 @@ This representation has two useful properties:
    between square locations and list indexes.
 2. Operations involving bounds checking are slightly simpler.
 """
+import random
+import math
 
 # The black and white pieces represent the two players.
 EMPTY, BLACK, WHITE, OUTER = '.', '@', 'o', '?'
@@ -67,6 +69,9 @@ def print_board(board):
     for row in range(1, 9):
         begin, end = 10*row + 1, 10*row + 9
         rep += '%d %s\n' % (row, ' '.join(board[begin:end]))
+
+    rep = rep.replace(" o", "⚪")
+    rep = rep.replace(" @", "⚫")
     return rep
 
 # -----------------------------------------------------------------------------
@@ -155,15 +160,110 @@ def any_legal_move(player, board):
 
 def play(black_strategy, white_strategy):
     # play a game of Othello and return the final board and score
+    board = initial_board()
+    prev_player = current_player = BLACK
+    strategies = {BLACK: black_strategy, WHITE: white_strategy}
+    while current_player := next_player(board, prev_player):
+        print(print_board(board))
+        print(score(BLACK, board), "IS MINIMAX SCORE")
+        move = get_move(strategies[current_player], current_player, board)
+        print("PLAYER", PLAYERS[current_player].upper() + "'S TURN. CHOOSES:", move)
+        board = make_move(move, current_player, board)
+        prev_player = current_player
+
+    
+    print("\n")
+    print("\n")
+    print(print_board(board))
+    if score(prev_player, board):
+        print("GAME FINISHED!", PLAYERS[prev_player].upper(), "WINS")
+    else:
+        print("GAME FINISHED!", PLAYERS[opponent(prev_player)].upper(), "WINS")
+        
 
 def next_player(board, prev_player):
     # which player should move next?  Returns None if no legal moves exist
+    next_player = opponent(prev_player)
+    if any_legal_move(next_player, board):
+        return next_player
+    elif any_legal_move(prev_player, board):
+        return prev_player
+    return None
 
 def get_move(strategy, player, board):
     # call strategy(player, board) to get a move
+    return strategy(player, board)
 
 def score(player, board):
-    # compute player's score (number of player's pieces minus opponent's)
+    # compute player's score (number of player's pieces mi
+    # nus opponent's)
+    opponent(player)
+    player_pieces = 0
+    opponent_pieces = 0
+
+    your_piece = "@"
+    opponent_piece = "o"
+    if player == WHITE:
+        your_piece, opponent_piece = opponent_piece, your_piece
+         
+    for square in squares():
+        if board[square] == your_piece:
+            player_pieces += 1
+        elif board[square] == opponent_piece:
+            opponent_pieces += 1
+            
+    # print(player_pieces, "Your pieces")
+    # print(opponent_pieces, "Opponent pieces")
+
+    return player_pieces - opponent_pieces
 
 # Play strategies
 
+def get_minimax_move(player, board):
+    moves = legal_moves(player, board)
+    bestMove = moves[0]
+    bestScore = -math.inf
+    for move in moves:
+        
+        new_board = make_move(move, player, board[::])
+        score = minimax(new_board, player, 4, False)
+        if score > bestScore:
+            bestScore = score
+            bestMove = move
+
+    return bestMove
+
+def get_random_move(player, board):
+    return random.choice(legal_moves(player, board))
+
+def get_human_move(player, board):
+    pass
+
+# Algorithms
+
+def board_heuristic_value(board, player):
+    return score(player, board)
+
+def minimax(board, player, depth=4, maximizing=True, alpha=-math.inf, beta=math.inf):
+    if depth == 0 or any_legal_move(player, board) == None:
+        return board_heuristic_value(board, player) - board_heuristic_value(board, opponent(player))
+    
+    if maximizing:
+        score = -math.inf
+        for move in legal_moves(player, board):
+            new_board = make_move(move, player, board[::])
+            score = max(score, minimax(new_board, player, depth-1, not maximizing))
+            alpha = max(score, alpha)
+            if alpha >= beta:
+                break
+    else: # Minimize
+        score = math.inf
+        for move in legal_moves(opponent(player), board):
+            new_board = make_move(move, opponent(player), board[::])
+            score = min(score, minimax(new_board, player, depth-1, not maximizing))
+            beta = min(score, beta)
+            if beta <= alpha:
+                break
+    return score
+
+play(get_minimax_move, get_random_move)
