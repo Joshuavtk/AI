@@ -2,7 +2,7 @@ import random
 import itertools
 import math
 
-MAX_DEPTH = 5
+MAX_DEPTH = 6
 CHANCE = 1
 MAX = 2
 
@@ -198,7 +198,7 @@ def get_expectimax_move(b):
     bestScore = 0
     for move in moves:
         new_b = MERGE_FUNCTIONS[move](b)
-        score = expectimax(new_b, 6, False)
+        score = expectimax(new_b, 1, MAX_DEPTH, False)
         if score > bestScore:
             bestScore = score
             bestMove = move
@@ -209,34 +209,42 @@ weights = [[32768,16384,8192,4096],[256,512,1024,2048],[128,64,32,16],[1,2,4,8]]
 def evaluate_board(b):
     return sum([math.log2((b[y][x]) - 1) * b[y][x] * weights[y][x] for y, x in itertools.product(range(4), range(4)) if b[y][x] != 0])
 
-def expectimax(b, depth, player, table=dict()):
-    key = tuple([tuple(row) for row in b])
+def key(b):
+    b = tuple([tuple(row) for row in b])
+    return hash(b) % 1_000_000, b
 
-    if key in table:
-        return table[key]
+def expectimax(b, P, depth, player, table=[(None, -1) for _ in range(1_000_000)]):
+    k, tb = key(b)
+
+    entry_board, entry_score = table[k]
+
+    if entry_score != -1 and entry_board == tb:
+        return entry_score
 
     moves = give_moves(b)
     zeros = count_zeros(b)
 
-    if depth == 0:
+    if depth == 0 or P < 0.0001:
         return evaluate_board(b)
     
     score = 0
     if player:
         for move in moves:
             new_b = MERGE_FUNCTIONS[move](b)
-            score = max(score, expectimax(new_b, depth - 1, False, table))
+            score = max(score, expectimax(new_b, P, depth - 1, False, table))
     else:
+        P2 = (0.9 / zeros)
+        P4 = (0.1 / zeros)
         for y, x in itertools.product(range(4), range(4)):
             if b[y][x] != 0:
                 continue
             b[y][x] = 2
-            score += (0.9 / zeros) * expectimax(b, depth - 1, True, table)
+            score += P2 * expectimax(b, P2 * P, depth - 1, True, table)
             b[y][x] = 4
-            score += (0.1 / zeros) * expectimax(b, depth - 1, True, table)
+            score += P4 * expectimax(b, P4 * P, depth - 1, True, table)
             b[y][x] = 0
 
-    table[key] = score
+    table[k] = (tb, score)
 
     return score
 
@@ -253,3 +261,9 @@ def count_zeros(b):
 
 
 #test()
+
+# Vraag B:
+# Met een probability pruning van 0.01% dan heeft de depth niet zo'n grote impact meer hoger dan 8 omdat de probability van alle zetten die dieper dan 8 zijn bijna altijd lager dan 0.01% ligt.
+# Qua acceptabele snelheid zouden we zelf zeggen een depth van 6 is de max. 
+# De transpositie tabel voorkomt dat eerder bezochte posities opnieuw worden gevalueerd.
+# bitboards, iterative deepening, betere heuristiek
