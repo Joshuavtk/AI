@@ -9,7 +9,7 @@ def make_domain():
     for i in [4,5,6,7,11]:
         domain[i] = set() 
 
-    words = open(os.path.dirname(os.path.abspath(__file__)) + "/words_NL.txt").read().splitlines()
+    words = open("words_NL.txt").read().splitlines()
 
     for word in words:
         index = len(word)
@@ -30,7 +30,13 @@ def valid(X, word, assign, unassigned_vars):
 def make_arc_consistent(domain, X, assign, unassigned_vars):
     pass
 
+runCount = 0
+
 def solve(domain, assign, unassigned_vars):
+    global runCount
+    runCount += 1
+    if runCount % 1000 == 0:
+        print(runCount, assign)
     if len(unassigned_vars) == len(assign):
         return True
 
@@ -42,7 +48,7 @@ def solve(domain, assign, unassigned_vars):
         if min_var == None:
             min_var = var
         else:
-            min_var = min(min_var, var, key=lambda x: len(domain[unassigned_vars[x]['length']]))
+            min_var = max(min_var, var, key=lambda x: len(unassigned_vars[x]['intersects']))
         
     length = unassigned_vars[min_var]['length']
 
@@ -62,21 +68,29 @@ def solve(domain, assign, unassigned_vars):
     return False
 
 domain = make_domain()
+unassigned_vars_2 = {
+    3: {'length': 5, 'intersects': { 9: (2, 0), 10: (4, 0) }},
+    6: {'length': 5, 'intersects': { 9: (1, 3), 10: (3, 3) }},
+    9: {'length': 5, 'intersects': { 3: (0, 2), 6: (3, 1) }},
+    10: {'length': 6, 'intersects': { 3: (0, 4), 6: (3, 3) }},
+}
+
 unassigned_vars = {
     1: {'length': 4, 'intersects': { 2: (1, 6), 4: (3, 4) }},
     2: {'length': 11, 'intersects': { 1: (6, 1) }},
-    3: {'length': 5, 'intersects': { 9: (2, 0), 10: (4, 0) }},
     4: {'length': 5, 'intersects': { 1: (4, 3), 5: (3, 0) }},
     5: {'length': 6, 'intersects': { 4: (0, 3), 11: (4, 0) }},
-    6: {'length': 5, 'intersects': { 9: (1, 3), 10: (3, 3) }},
     7: {'length': 5, 'intersects': { 11: (3, 3) }},
     8: {'length': 4, 'intersects': { 11: (3, 6) }},
-    9: {'length': 5, 'intersects': { 3: (0, 2), 6: (3, 1) }},
-    10: {'length': 6, 'intersects': { 3: (0, 4), 6: (3, 3) }},
     11: {'length': 7, 'intersects': { 5: (0, 4), 7: (3, 3), 8: (6, 3) }},
 }
 assign = dict()
 solution_found = solve(domain, assign, unassigned_vars)
+print(assign)
+
+
+assign = dict()
+solution_found = solve(domain, assign, unassigned_vars_2)
 print(assign)
 
 # Vragen:
