@@ -86,8 +86,21 @@ def cover(r, row_valid, col_valid, row_has_1_at, col_has_1_at):
     #   cover all cols that have a 1 in row r
     #   cover all rows r' that intersect/overlap with row r
     # returns row_valid, col_valid
+    N = len(row_valid)
+    M = len(col_valid)
 
-    pass
+    new_col_valid = [e for e in col_valid]
+    for col in row_has_1_at[r]:
+        new_col_valid[col] = 0
+
+    new_row_valid = [e for e in row_valid]
+    for row in col_has_1_at:
+        if r in row:
+            for i in row:
+                new_row_valid[i] = 0
+
+    return new_row_valid, new_col_valid
+
 
 def print_solution(solution, row_has_1_at):
     # place triominoes in matrix D 3 rows x 4 cols
@@ -109,13 +122,38 @@ def print_solution(solution, row_has_1_at):
     for i in D:
         print(i)
 
-def solve(row_valid, col_valid, row_has_1_at, col_has_1_at, solution):
+def solve(row_valid, col_valid, row_has_1_at, col_has_1_at, solution, visited=set()):
     # using Algoritm X, find all solutions (= set of rows) given valid/uncovered rows and cols
-    pass
 
+    s = tuple(sorted(solution))
+
+    if sum(col_valid) == 0 and s not in visited:
+        visited.add(s)
+        print_solution(solution, row_has_1_at)
+        return
+
+    col_has_1_at = [c for i, c in enumerate(col_has_1_at) if col_valid[i] == 1]
+
+    if len(col_has_1_at) == 0:
+        return
+
+    col_has_1_at = sorted(col_has_1_at, key=lambda c: len(c))
+
+    for c in col_has_1_at:
+        for r in c:
+            if row_valid[r] == 0:
+                continue
+
+            solution.append(r)
+            new_row_valid, new_col_valid = cover(r, row_valid, col_valid, row_has_1_at, col_has_1_at)
+            solve(new_row_valid, new_col_valid, row_has_1_at, col_has_1_at, solution)
+            solution.pop()
 
 mx = make_matrix(triominoes)
 
 halt_fl, row_valid, col_valid, row_has_1_at, col_has_1_at = prepare(mx)
 if not halt_fl:
     solve(row_valid, col_valid, row_has_1_at, col_has_1_at, [])
+
+# Vraag 5:
+#  a: Er zijn 4 oplossingen
