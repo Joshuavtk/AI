@@ -12,8 +12,30 @@ cards = ['K', 'K', 'Q', 'Q', 'J', 'J', 'A', 'A']
 neighbors = {0:[3], 1:[2], 2:[1,4,3], 3:[0,2,5], 4:[2,5], 5:[3,4,6,7], 6:[5], 7:[5]}
 
 def is_valid(board):
+    valid = True
     for idx, card in enumerate(board):
-        pass
+        card = board[card]
+        for neighbor_idx in neighbors[idx]:
+            neighbor_card = board[neighbor_idx]
+            # print(idx, card)
+            valid &= check_if_valid_combination(card, neighbor_card)
+    return valid    
+            
+        
+def check_if_valid_combination(card_1, card_2):
+    if '.' in [card_1, card_2]:
+        return True
+    if card_1 == card_2:
+        return False
+    if card_1 in ['A', 'K'] and card_2 in ['A', 'K']:
+        return True
+    if card_1 in ['Q', 'K'] and card_2 in ['Q', 'K']:
+        return True
+    if card_1 in ['J', 'Q'] and card_2 in ['Q', 'J']:
+        return True
+    if card_1 in ['Q', 'A'] and card_2 in ['A', 'Q']:
+        return False
+    return False
 
 def test():
     # is_valid(board) checks all cards, returns False if any card is invalid
@@ -29,3 +51,5 @@ def test():
     print('f ',is_valid({0: '.', 1: '.', 2: '.', 3: '.', 4: 'J', 5: 'J', 6: '.', 7: '.'})) # [5]
     print('f ',is_valid({0: '.', 1: '.', 2: '.', 3: '.', 4: '.', 5: 'Q', 6: '.', 7: 'Q'})) # [5]
     print('t ',is_valid({0: 'Q', 1: 'Q', 2: '.', 3: '.', 4: '.', 5: '.', 6: '.', 7: '.'}))
+
+test()
