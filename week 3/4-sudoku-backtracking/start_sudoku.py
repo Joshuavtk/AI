@@ -1,4 +1,6 @@
 import time
+from copy import deepcopy
+from sudokus import top_95_sudokus, generated_sudokus
 
 #   1 2 3 4 .. 9
 # A
@@ -77,10 +79,82 @@ def no_conflict(grid, c, val):
            return False # conflict
     return True
 
+def check_if_valid_board(grid):
+    no_collusions = True
+    for cell in cells:
+        value_to_check = grid[cell]
+        for p in peers[cell]:
+            if grid[p] == value_to_check:
+                no_collusions = False
+    if not no_collusions:
+        print("ILLEGAL BOARD STATE FOUND!")
+
+
 def solve(grid):
-    # backtracking search for a solution (DFS)
-    # your code here
-    pass
+    default_values = [(cell, grid[cell]) for cell in cells if len(grid[cell]) == 1]
+    grid = initialize_board(grid, default_values)
+    # display(grid)
+    solve_recursive(grid)
+
+def solve_recursive(grid):
+    if all(len(grid[cell]) == 1 for cell in cells):
+        print("SOLUTION FOUND!:")
+        display(grid)
+        check_if_valid_board(grid)
+        return True
+
+    if len([cell for cell in cells if len(grid[cell]) > 1]) == 0:
+        return False
+
+    # Find the cell with the minimum number of possibilities
+    min_cell = min((cell for cell in cells if len(grid[cell]) > 1), key=lambda cell: len(grid[cell]))
+
+    for number in grid[min_cell]:
+        if no_conflict(grid, min_cell, number):
+            grid_copy = deepcopy(grid)
+            grid_copy[min_cell] = number
+            not_illegal, grid_copy = make_arc_consistent(grid_copy, number, min_cell)
+            if not not_illegal:
+                continue
+            if solve_recursive(grid_copy):
+                return True
+
+    return False
+
+def initialize_board(grid, default_values):
+    for cell, value in default_values:
+        for p in peers[cell]:
+            
+            prev_len = len(grid[p])
+
+            grid[p] = grid[p].replace(value, '')
+
+            if len(grid[p]) == 1 and len(grid[p]) != prev_len:
+                number = grid[p]
+                _, grid = make_arc_consistent(grid, number, p)
+
+    return grid
+
+
+def make_arc_consistent(grid, start_value, start_index) -> (bool, dict()):
+    queue = [(x, start_value) for x in peers[start_index]]
+    while queue:
+        x,y = queue.pop(0)
+
+        prev_len = len(grid[x])
+        grid[x] = grid[x].replace(y, '')
+        
+        if len(grid[x]) == 0:
+            return False, grid
+                
+        if len(grid[x]) == 1 and (len(grid[x]) != prev_len):
+            number = grid[x]
+            for p in peers[x]:
+                if number in grid[p]:
+                    queue.append((p, number))
+        
+    return True, grid
+
 
 # minimum nr of clues for a unique solution is 17
 slist = [None for x in range(20)]
@@ -96,7 +170,9 @@ slist[8] = '..6.4.5.......2.3.23.5..8765.3.........8.1.6.......7.1........5.6..3
 slist[9] = '4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......'
 slist[10]= '85...24..72......9..4.........1.7..23.5...9...4...........8..7..17..........36.4.'
 slist[11]= '...5....2...3..85997...83..53...9...19.73...4...84...1.471..6...5...41...1...6247'
-slist[12]= '.....6....59.....82....8....45........3........6..3.54...325..6..................'
+slist[12]= '6.3.5....5...7..1...4.2.86.....8..533....61...5...26.4..1........2.........1.8.2.'
+# Original 12 puzzle. Takes very long to complete
+# slist[12]= '.....6....59.....82....8....45........3........6..3.54...325..6..................'
 slist[13]= '4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......'
 slist[14]= '8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..'
 slist[15]= '6..3.2....5.....1..........7.26............543.........8.15........4.2........7..'
@@ -104,6 +180,10 @@ slist[16]= '.6.5.1.9.1...9..539....7....4.8...7.......5.8.817.5.3.....5.2.......
 slist[17]= '..5...987.4..5...1..7......2...48....9.1.....6..2.....3..6..2.......9.7.......5..'
 slist[18]= '3.6.7...........518.........1.4.5...7.....6.....2......2.....4.....8.3.....5.....'
 slist[19]= '1.....3.8.7.4..............2.3.1...........958.........5.6...7.....8.2...4.......'
+
+# Use list of 95 difficult sudokus
+slist += top_95_sudokus
+slist += generated_sudokus
 
 for i,sudo in enumerate(slist):
     print('*** sudoku {0} ***'.format(i))
