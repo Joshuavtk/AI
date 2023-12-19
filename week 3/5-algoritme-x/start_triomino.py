@@ -86,8 +86,6 @@ def cover(r, row_valid, col_valid, row_has_1_at, col_has_1_at):
     #   cover all cols that have a 1 in row r
     #   cover all rows r' that intersect/overlap with row r
     # returns row_valid, col_valid
-    N = len(row_valid)
-    M = len(col_valid)
 
     new_col_valid = [e for e in col_valid]
     for col in row_has_1_at[r]:
@@ -122,32 +120,28 @@ def print_solution(solution, row_has_1_at):
     for i in D:
         print(i)
 
-def solve(row_valid, col_valid, row_has_1_at, col_has_1_at, solution, visited=set()):
+def solve(row_valid, col_valid, row_has_1_at, col_has_1_at, solution):
     # using Algoritm X, find all solutions (= set of rows) given valid/uncovered rows and cols
 
-    s = tuple(sorted(solution))
-
-    if sum(col_valid) == 0 and s not in visited:
-        visited.add(s)
+    if sum(col_valid) == 0:
         print_solution(solution, row_has_1_at)
         return
 
-    col_has_1_at = [c for i, c in enumerate(col_has_1_at) if col_valid[i] == 1]
+    list_of_valid_cols = [c for i, c in enumerate(col_has_1_at) if col_valid[i] == 1]
 
-    if len(col_has_1_at) == 0:
+    if len(list_of_valid_cols) == 0:
         return
 
-    col_has_1_at = sorted(col_has_1_at, key=lambda c: len(c))
+    c = min(list_of_valid_cols, key=lambda c: len(c))
 
-    for c in col_has_1_at:
-        for r in c:
-            if row_valid[r] == 0:
-                continue
+    for r in c:
+        if row_valid[r] == 0:
+            continue
 
-            solution.append(r)
-            new_row_valid, new_col_valid = cover(r, row_valid, col_valid, row_has_1_at, col_has_1_at)
-            solve(new_row_valid, new_col_valid, row_has_1_at, col_has_1_at, solution)
-            solution.pop()
+        solution.append(r)
+        new_row_valid, new_col_valid = cover(r, row_valid, col_valid, row_has_1_at, col_has_1_at)
+        solve(new_row_valid, new_col_valid, row_has_1_at, col_has_1_at, solution)
+        solution.pop()
 
 mx = make_matrix(triominoes)
 

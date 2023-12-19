@@ -1,6 +1,5 @@
 import time
 from copy import deepcopy
-from sudokus import top_95_sudokus, generated_sudokus
 
 #   1 2 3 4 .. 9
 # A
@@ -89,71 +88,112 @@ def check_if_valid_board(grid):
     if not no_collusions:
         print("ILLEGAL BOARD STATE FOUND!")
 
+def cover(r, row_valid, col_valid, row_has_1_at, col_has_1_at):
+    # given a row r:
+    #   cover all cols that have a 1 in row r
+    #   cover all rows r' that intersect/overlap with row r
+    # returns row_valid, col_valid
 
-def solve(grid):
-    default_values = [(cell, grid[cell]) for cell in cells if len(grid[cell]) == 1]
-    grid = initialize_board(grid, default_values)
-    # display(grid)
-    solve_recursive(grid)
+    new_col_valid = [e for e in col_valid]
+    for col in row_has_1_at[r]:
+        new_col_valid[col] = 0
 
-def solve_recursive(grid):
-    if all(len(grid[cell]) == 1 for cell in cells):
-        print("SOLUTION FOUND!:")
-        display(grid)
-        check_if_valid_board(grid)
+    new_row_valid = [e for e in row_valid]
+    for row in col_has_1_at:
+        if r in row:
+            for i in row:
+                new_row_valid[i] = 0
+
+    return new_row_valid, new_col_valid
+
+def decode_solution(grid, solution):
+    for value in solution:
+        col = (value % 81) // 9 + 1
+        row = value // 81
+        digit = (value % 9) + 1
+        coords = rows[row] + str(col)
+        grid[coords] = str(digit)
+        
+    check_if_valid_board(grid)
+    display(grid)
+    
+
+def solve(grid, row_valid, col_valid, row_has_1_at, col_has_1_at, solution = []):
+    # using Algoritm X, find all solutions (= set of rows) given valid/uncovered rows and cols
+
+    if sum(col_valid) == 0:
+        print("SOLUTION FOUND!: ")
+        print(solution)
+        decode_solution(grid, solution)
         return True
 
-    if len([cell for cell in cells if len(grid[cell]) > 1]) == 0:
-        return False
+    list_of_valid_cols = [[r for r in c if row_valid[r] == 1] for i, c in enumerate(col_has_1_at) if col_valid[i] == 1]
+    list_of_valid_cols = [c for c in list_of_valid_cols if len(c) != 0] # remove empty ones
 
-    # Find the cell with the minimum number of possibilities
-    min_cell = min((cell for cell in cells if len(grid[cell]) > 1), key=lambda cell: len(grid[cell]))
+    if len(list_of_valid_cols) == 0:
+        return False 
+    
+    c = min(list_of_valid_cols, key=lambda c: len(c))
 
-    for number in grid[min_cell]:
-        if no_conflict(grid, min_cell, number):
-            grid_copy = deepcopy(grid)
-            grid_copy[min_cell] = number
-            not_illegal, grid_copy = make_arc_consistent(grid_copy, number, min_cell)
-            if not not_illegal:
-                continue
-            if solve_recursive(grid_copy):
-                return True
+    for r in c:
+        if row_valid[r] == 0:
+            continue
 
+        solution.append(r)
+        new_row_valid, new_col_valid = cover(r, row_valid, col_valid, row_has_1_at, col_has_1_at)
+        if solve(grid, new_row_valid, new_col_valid, row_has_1_at, col_has_1_at, solution):
+            return True
+        solution.pop()
+    
     return False
 
-def initialize_board(grid, default_values):
-    for cell, value in default_values:
-        for p in peers[cell]:
-            
-            prev_len = len(grid[p])
 
-            grid[p] = grid[p].replace(value, '')
+def create_sudoku_matrix():
+    matrix = []
 
-            if len(grid[p]) == 1 and len(grid[p]) != prev_len:
-                number = grid[p]
-                _, grid = make_arc_consistent(grid, number, p)
+    for row in range(9):
+        for col in range(9):
+            for digit in range(1, 10):
+                matrix_row = [0] * 324
 
-    return grid
+                matrix_row[row * 9 + col] = 1
 
+                matrix_row[81 + 9 * row + digit - 1] = 1
 
-def make_arc_consistent(grid, start_value, start_index) -> (bool, dict()):
-    queue = [(x, start_value) for x in peers[start_index]]
-    while queue:
-        x,y = queue.pop(0)
+                matrix_row[162 + 9 * col + digit - 1] = 1
 
-        prev_len = len(grid[x])
-        grid[x] = grid[x].replace(y, '')
-        
-        if len(grid[x]) == 0:
-            return False, grid
-                
-        if len(grid[x]) == 1 and (len(grid[x]) != prev_len):
-            number = grid[x]
-            for p in peers[x]:
-                if number in grid[p]:
-                    queue.append((p, number))
-        
-    return True, grid
+                matrix_row[243 + 27 * (row // 3) + 9 * (col // 3) + digit - 1] = 1
+
+                matrix.append(matrix_row)
+
+    return matrix
+
+def prepare_matrix(matrix):
+    col_valid = [1] * 324
+    row_valid = [1] * 729
+    row_has_1_at = []
+    col_has_1_at = []
+
+    for row in matrix:
+        row_has_1_at.append([i for i, row in enumerate(row) if row == 1])
+
+    for col in range(324):
+        temp = []
+        for row in range(729):
+            if matrix[row][col] == 1:
+                temp.append(row)
+        col_has_1_at.append(temp)
+
+    return row_valid, col_valid, row_has_1_at, col_has_1_at
+
+def cover_initial_soduko(grid, row_valid, col_valid, row_has_1_at, col_has_1_at):
+    for row in range(9):
+        for col in range(9):
+            key = rows[row] + str(col + 1)
+            if len(grid[key]) == 1:
+                digit = int(grid[key])
+                row_valid, col_valid = cover((digit-1) + 9 * col + 9 * 9 * row, row_valid, col_valid, row_has_1_at, col_has_1_at)
+    return row_valid, col_valid
 
 
 # minimum nr of clues for a unique solution is 17
@@ -170,9 +210,7 @@ slist[8] = '..6.4.5.......2.3.23.5..8765.3.........8.1.6.......7.1........5.6..3
 slist[9] = '4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......'
 slist[10]= '85...24..72......9..4.........1.7..23.5...9...4...........8..7..17..........36.4.'
 slist[11]= '...5....2...3..85997...83..53...9...19.73...4...84...1.471..6...5...41...1...6247'
-slist[12]= '6.3.5....5...7..1...4.2.86.....8..533....61...5...26.4..1........2.........1.8.2.'
-# Original 12 puzzle. Takes very long to complete
-# slist[12]= '.....6....59.....82....8....45........3........6..3.54...325..6..................'
+slist[12]= '.....6....59.....82....8....45........3........6..3.54...325..6..................'
 slist[13]= '4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......'
 slist[14]= '8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..'
 slist[15]= '6..3.2....5.....1..........7.26............543.........8.15........4.2........7..'
@@ -181,16 +219,27 @@ slist[17]= '..5...987.4..5...1..7......2...48....9.1.....6..2.....3..6..2.......
 slist[18]= '3.6.7...........518.........1.4.5...7.....6.....2......2.....4.....8.3.....5.....'
 slist[19]= '1.....3.8.7.4..............2.3.1...........958.........5.6...7.....8.2...4.......'
 
-# Use list of 95 difficult sudokus
+from sudokus import top_95_sudokus, generated_sudokus
 slist += top_95_sudokus
 slist += generated_sudokus
+
+matrix = create_sudoku_matrix()
+
 
 for i,sudo in enumerate(slist):
     print('*** sudoku {0} ***'.format(i))
     print(sudo)
     d = parse_string_to_dict(sudo)
     start_time = time.time()
-    solve(d)
+
+
+    row_valid, col_valid, row_has_1_at, col_has_1_at = prepare_matrix(matrix)
+
+    row_valid, col_valid = cover_initial_soduko(d, row_valid, col_valid, row_has_1_at, col_has_1_at)
+
+
+    solve(d, row_valid, col_valid, row_has_1_at, col_has_1_at, [])
+        
     end_time = time.time()
     hours, rem = divmod(end_time-start_time, 3600)
     minutes, seconds = divmod(rem, 60)
