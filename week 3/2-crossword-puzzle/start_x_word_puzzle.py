@@ -1,20 +1,26 @@
 import os
 from collections import deque
+from copy import deepcopy
 
 # kruiswoord puzzel
 
 def make_domain():
     # domain is a dict var:value and value is a set of words with correct length
     domain = dict()
+
+    size_domain = dict()
     for i in [4,5,6,7,11]:
-        domain[i] = set() 
+        size_domain[i] = set() 
 
     words = open("words_NL.txt").read().splitlines()
 
     for word in words:
         index = len(word)
-        if index in domain:
-            domain[index].add(word)
+        if index in size_domain:
+            size_domain[index].add(word)
+
+    for i, var in enumerate([4,11,5,5,6,5,5,4,5,6,7]):
+        domain[i + 1] = deepcopy(size_domain[var])
     
     return domain
 
@@ -28,20 +34,42 @@ def valid(X, word, assign, unassigned_vars):
     return True
 
 def make_arc_consistent(domain, X, assign, unassigned_vars):
-    pass
+    # var : word
+    new_domain = deepcopy(domain)
+    stack = []
+    for p in unassigned_vars[X]['intersects'].keys():
+        changed = False
+        for word in domain[p]:
+            if not valid(p, word, assign, unassigned_vars):
+                new_domain[p].remove(word)
+                changed = True
 
-runCount = 0
+        if len(new_domain[p]) == 0:
+            return False, new_domain
+        
+        if changed:
+            stack.append(p)
+
+    while stack:
+        current = stack.pop()
+
+        if len(new_domain[current]) != 1:
+            continue
+
+        for p in unassigned_vars[current]['intersects'].keys():
+            success, new_domain = make_arc_consistent(new_domain, p, assign, unassigned_vars)
+            if not success:
+                return False, new_domain
+
+    return True, new_domain
+    
 
 def solve(domain, assign, unassigned_vars):
-    global runCount
-    runCount += 1
-    if runCount % 1000 == 0:
-        print(runCount, assign)
     if len(unassigned_vars) == len(assign):
         return True
 
     min_var = None
-    for var, properties in unassigned_vars.items():
+    for var in unassigned_vars.keys():
         if var in assign:
             continue
         
@@ -49,18 +77,20 @@ def solve(domain, assign, unassigned_vars):
             min_var = var
         else:
             min_var = max(min_var, var, key=lambda x: len(unassigned_vars[x]['intersects']))
-        
-    length = unassigned_vars[min_var]['length']
-
-    for word in domain[length]:
+    
+    for word in domain[min_var]:
         if not valid(min_var, word, assign, unassigned_vars):
             continue
 
         assign[min_var] = word
 
         # make arc consistent here ~
+        success, new_domain = make_arc_consistent(domain, min_var, assign, unassigned_vars)
 
-        if solve(domain, assign, unassigned_vars):
+        if not success:
+            continue
+
+        if solve(new_domain, assign, unassigned_vars):
             return True
         
         del assign[min_var]
@@ -106,5 +136,5 @@ print(assign)
 #  b: Als een crossing waarde waarin de positie van de crossing op beide velden staat. 
 #     De lengte constraint wordt gerepresenteerd door de lengte van het veld op te slaan
 #  c: Er bestaan één of meer waardes voor het kruisende veld
-#  d: Lijkt niet zinvol omdat je snel kan berekenen welke waardes wel of niet voldoen aan de constraints
+#  d: Het helpt met het tijdig stoppen van een search als er geen geldige mogelijkheden zijn voor een kruisend woord, het is dus zinvol.
 # 3: Realistisch gezien is het onmogelijk omdat er zoveel combinaties zijn.   
