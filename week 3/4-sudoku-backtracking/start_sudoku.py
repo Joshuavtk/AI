@@ -107,7 +107,8 @@ def solve_recursive(grid):
         return False
 
     # Find the cell with the minimum number of possibilities
-    min_cell = min((cell for cell in cells if len(grid[cell]) > 1), key=lambda cell: len(grid[cell]))
+    min_cell = min((cell for cell in cells if len(grid[cell]) > 1), key=lambda cell: len(grid[cell]) + sum([len(grid[p]) for p in peers[cell]]))
+
 
     for number in grid[min_cell]:
         if no_conflict(grid, min_cell, number):
@@ -170,9 +171,7 @@ slist[8] = '..6.4.5.......2.3.23.5..8765.3.........8.1.6.......7.1........5.6..3
 slist[9] = '4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......'
 slist[10]= '85...24..72......9..4.........1.7..23.5...9...4...........8..7..17..........36.4.'
 slist[11]= '...5....2...3..85997...83..53...9...19.73...4...84...1.471..6...5...41...1...6247'
-slist[12]= '6.3.5....5...7..1...4.2.86.....8..533....61...5...26.4..1........2.........1.8.2.'
-# Original 12 puzzle. Takes very long to complete
-# slist[12]= '.....6....59.....82....8....45........3........6..3.54...325..6..................'
+slist[12]= '.....6....59.....82....8....45........3........6..3.54...325..6..................'
 slist[13]= '4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......'
 slist[14]= '8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..'
 slist[15]= '6..3.2....5.....1..........7.26............543.........8.15........4.2........7..'
@@ -185,6 +184,9 @@ slist[19]= '1.....3.8.7.4..............2.3.1...........958.........5.6...7.....8
 slist += top_95_sudokus
 slist += generated_sudokus
 
+
+start_run_time = time.time()
+
 for i,sudo in enumerate(slist):
     print('*** sudoku {0} ***'.format(i))
     print(sudo)
@@ -196,3 +198,15 @@ for i,sudo in enumerate(slist):
     minutes, seconds = divmod(rem, 60)
     print("duration [hh:mm:ss.ddd]: {:0>2}:{:0>2}:{:06.3f}".format(int(hours),int(minutes),seconds))
     print()
+
+
+end_time = time.time()
+hours, rem = divmod(end_time-start_run_time, 3600)
+minutes, seconds = divmod(rem, 60)
+print("FULL RUN COMPLETED IN: ")
+print("duration [hh:mm:ss.ddd]: {:0>2}:{:0>2}:{:06.3f}".format(int(hours),int(minutes),seconds))
+print()
+
+# ARC CONSIS. CELL HEURISTIC RUNTIME: 44.891
+# ARC CONSIS. PEERS HEURISTIC RUNTIME: 32.182
+# ARC CONSIS. CELL + PEERS HEURISTIC RUNTIME: 32.063
