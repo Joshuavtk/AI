@@ -74,7 +74,8 @@ def transition_model(state):
     return distr_next_states
 
 def get_next_state(distr_next_states):
-    pass
+    # Sample the next state based on the probability distribution
+    return max(distr_next_states.keys(), key=lambda k: distr_next_states[k])
 
 def observation_model(state):
     # given a state, return the distribution for its observations = positions
@@ -92,7 +93,25 @@ def observation_model(state):
     return observed_states
 
 def Viterbi(all_possible_states, observations):
-    pass
+    viterbi = {}
+    backpointer = {}
+
+    o = observations[0]
+    for s in all_possible_states:
+        viterbi[s,0] = observation_model(s)[o]
+        backpointer[s,0] = 0
+    
+    T = len(observations) - 1
+    for t in range(1, T):
+        for s in all_possible_states:
+            viterbi[s,t] = max([viterbi[S,t - 1] * transition_model(S)[observations[t - 1]] * observation_model(s)[t] for S in all_possible_states])
+            backpointer[s,t] = max(all_possible_states, key=lambda S: viterbi[S,t - 1] * transition_model(S)[observations[t - 1]] * observation_model(s)[t])
+
+    bestpathprob = max([viterbi[s][T] for s in all_possible_states])
+
+    bestpathpointer = max(backpointer, key=lambda s: viterbi[s][T])
+
+    return bestpathprob, bestpathpointer
 
 def load_data(filename):
     states = []

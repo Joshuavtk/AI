@@ -69,6 +69,10 @@ class MainApp(tk.Frame):
             if not START_FLAG:
                 self.re_plot()
             START_FLAG = False
+            states, observed_path = mo.load_data("observations_v1.txt")
+            all_possible_states = mo.get_all_states()
+            path = mo.Viterbi(all_possible_states, observed_path)
+            print(path)
             #mo.move_robot(self, cf.START_POS)
             # this will start the main program
             mo.move_robot(self, cf.START_POS)
