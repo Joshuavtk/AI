@@ -30,6 +30,13 @@ g) 0, je hebt minimaal 7 stappen nodig.
  - up -> (10,10)
  
 (stay wordt niet gezien als een stap)
-in totaal zijn er 20 mogelijke paden van 6 stappen lang (zie g.png)
+in totaal zijn er 20 mogelijke paden van 6 stappen lang (zie [g.png](g.png))
 
-h)
+h) Zie [h.py](h.py)
+
+Formule
+(Waarbij x = abs(x1 - x2) en y = abs(y1 - y2)): 
+
+$ F(x, y) = 1 + F(x-1, y) + F(x, y-1) $
+
+
