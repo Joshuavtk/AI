@@ -1,6 +1,7 @@
 import random
 import math
 import config as cf
+import numpy
 
 # global var
 grid  = [[0 for x in range(cf.SIZE)] for y in range(cf.SIZE)]
@@ -92,7 +93,24 @@ def observation_model(state):
     return observed_states
 
 def Viterbi(all_possible_states, observations):
-    pass
+    path_probability =  [[(N,T) for N in all_possible_states] for T in range(len(observations))]
+    backpointer = path_probability
+    for s, state in enumerate(all_possible_states):
+        path_probability[s, 1] # = pi s * bs(o1) ??
+        backpointer[s, 1] = 0
+
+    for t in range(2, len(observations)):
+        for s, state in enumerate(all_possible_states):
+            path_probability[s,t] = max([path_probability[s_, t-1] for s_ in # get list of possible previous paths)
+            backpointer[s,t] = numpy.argmax([path_probability[s_, t-1] for s_ in # get list of possible previous paths)
+
+    bestpathprob = max([viterbi[s, len(observations)] for s in all_possible_states])
+    bestpathpointer = numpy.argmax([viterbi[s, len(observations)] for s in all_possible_states])
+    bestpath = [bestpathpointer]
+    for i in range(len(observations)):
+        bestpath.append(backpointer[bestpath[-1], len(observations - i)])
+
+    return bestpath, bestpathprob
 
 def load_data(filename):
     states = []
