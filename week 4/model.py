@@ -1,6 +1,7 @@
 import random
 import math
 import config as cf
+import numpy
 
 # global var
 grid  = [[0 for x in range(cf.SIZE)] for y in range(cf.SIZE)]
@@ -93,45 +94,24 @@ def observation_model(state):
     return observed_states
 
 def Viterbi(all_possible_states, observations):
-    viterbi = [{}]
-    backpointer = [{}]
+    path_probability =  [[(N,T) for N in all_possible_states] for T in range(len(observations))]
+    backpointer = path_probability
+    for s, state in enumerate(all_possible_states):
+        path_probability[s, 1] # = pi s * bs(o1) ??
+        backpointer[s, 1] = 0
 
-    o = observations[0]
-    for s in all_possible_states:
-        viterbi[0][s] = observation_model(s)[o]
-        backpointer[0][s] = None
-    
-    for t in range(1, len(observations)):
-        print(t)
-        viterbi.append({})
-        backpointer.append({})
-        for s in all_possible_states:
-            viterbi[t][s] = -1
-            o = observations[t]
-            for S in all_possible_states:
-                prob = viterbi[t-1][S] * transition_model(S)[s] * observation_model(s)[o]
-                if prob > viterbi[t][s]:
-                    viterbi[t][s] = prob
-                    backpointer[t][s] = S
+    for t in range(2, len(observations)):
+        for s, state in enumerate(all_possible_states):
+            path_probability[s,t] = max([path_probability[s_, t-1] for s_ in # get list of possible previous paths)
+            backpointer[s,t] = numpy.argmax([path_probability[s_, t-1] for s_ in # get list of possible previous paths)
 
-    path = []
-    bestpathprob = -1
-    bestpathpointer = None
-    for s in all_possible_states:
-        prob = viterbi[-1][s]
-        if prob > bestpathprob:
-            bestpathprob = prob
-            bestpathpointer = s
+    bestpathprob = max([viterbi[s, len(observations)] for s in all_possible_states])
+    bestpathpointer = numpy.argmax([viterbi[s, len(observations)] for s in all_possible_states])
+    bestpath = [bestpathpointer]
+    for i in range(len(observations)):
+        bestpath.append(backpointer[bestpath[-1], len(observations - i)])
 
-    path.append(bestpathpointer)
-    previous = bestpathpointer 
-
-    for t in range(len(viterbi) - 2, -1, -1):
-        s = backpointer[t+1][previous]
-        path.insert(0, s)
-        previous = s
-
-    return path
+    return bestpath, bestpathprob
 
 def load_data(filename):
     states = []

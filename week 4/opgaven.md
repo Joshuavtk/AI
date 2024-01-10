@@ -19,13 +19,11 @@ d) ${3 \over 25}$, dus als de robot oneindig lang door zou lopen zou de robot ge
 |$R$|$1\over10$|$0\over10$|$0\over10$|$9\over10$|$0\over10$|$10\over10$|
 |$D$|$1\over10$|$0\over10$|$0\over10$|$0\over10$|$9\over10$|$10\over10$|
 
+e) 4^10 = 1048576 mogelijke paden als stay overgeslagen word als stap (zie [E.py](E.py))
 
+f) de branching factor is: 4
 
-e) Zie [e.py](e.py). Het antwoord is: 1048576
-
-f) de branching factor is: $ 4^d $
-
-g) In totaal zijn er 20 mogelijke paden van 6 stappen lang (zie [g.png](g.png))
+g) in totaal zijn er 20 mogelijke paden van 6 stappen lang (zie [g.png](g.png))
 
 h) Zie [h.py](h.py)
 
@@ -36,3 +34,4 @@ $ F(x, y) = 1 + F(x-1, y) + F(x, y-1) $
 
 i) $ 1 \over 5 $
 
+j) 
