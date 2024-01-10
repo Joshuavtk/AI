@@ -69,7 +69,7 @@ class MainApp(tk.Frame):
             if not START_FLAG:
                 self.re_plot()
             START_FLAG = False
-            states, observed_path = mo.load_data("observations_v1.txt")
+            states, observed_path = mo.load_data("observations_v2.txt")
             all_possible_states = mo.get_all_states()
             path = mo.Viterbi(all_possible_states, observed_path)
             print(path)
