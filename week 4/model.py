@@ -93,25 +93,45 @@ def observation_model(state):
     return observed_states
 
 def Viterbi(all_possible_states, observations):
-    viterbi = {}
-    backpointer = {}
+    viterbi = [{}]
+    backpointer = [{}]
 
     o = observations[0]
     for s in all_possible_states:
-        viterbi[s,0] = observation_model(s)[o]
-        backpointer[s,0] = 0
+        viterbi[0][s] = observation_model(s)[o]
+        backpointer[0][s] = None
     
-    T = len(observations) - 1
-    for t in range(1, T):
+    for t in range(1, len(observations)):
+        print(t)
+        viterbi.append({})
+        backpointer.append({})
         for s in all_possible_states:
-            viterbi[s,t] = max([viterbi[S,t - 1] * transition_model(S)[observations[t - 1]] * observation_model(s)[t] for S in all_possible_states])
-            backpointer[s,t] = max(all_possible_states, key=lambda S: viterbi[S,t - 1] * transition_model(S)[observations[t - 1]] * observation_model(s)[t])
+            viterbi[t][s] = -1
+            o = observations[t]
+            for S in all_possible_states:
+                prob = viterbi[t-1][S] * transition_model(S)[s] * observation_model(s)[o]
+                if prob > viterbi[t][s]:
+                    viterbi[t][s] = prob
+                    backpointer[t][s] = S
 
-    bestpathprob = max([viterbi[s][T] for s in all_possible_states])
+    path = []
+    bestpathprob = -1
+    bestpathpointer = None
+    for s in all_possible_states:
+        prob = viterbi[-1][s]
+        if prob > bestpathprob:
+            bestpathprob = prob
+            bestpathpointer = s
 
-    bestpathpointer = max(backpointer, key=lambda s: viterbi[s][T])
+    path.append(bestpathpointer)
+    previous = bestpathpointer 
 
-    return bestpathprob, bestpathpointer
+    for t in range(len(viterbi) - 2, -1, -1):
+        s = backpointer[t+1][previous]
+        path.insert(0, s)
+        previous = s
+
+    return path
 
 def load_data(filename):
     states = []
