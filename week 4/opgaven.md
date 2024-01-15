@@ -1,4 +1,4 @@
-### Opgave 1:
+### Opgave 1: BAYES RULE
 
 $P(H) = 0.15$
 
