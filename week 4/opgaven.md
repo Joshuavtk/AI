@@ -1,23 +1,18 @@
 ### Opgave 1:
 
-$P(Blauw) = 0.15$
+$P(H) = 0.15$
 
-$P(Groen) = 0.85$
+$P(\lnot H) = 0.85$
 
-$P(Juist) = 0.8$
+$P(E|H) = 0.8$  
 
-$P(Onjuist) = 0.2$
+$P(E|\lnot H) = 0.2$
 
-$ P(H) = P(Blauw) * P(Juist) + P(Groen) * P(Onjuist) = 0.29$
+$P(E) = P(E|H) \cdot P(H) + P(E|\lnot H) \cdot P(\lnot H) = 0.29$
 
-$ P(E) = P(E|H) * P(E|-H) = 0.12$
+$ P(H|E) = {{P(E|H) \cdot P(H)} \over P(E)} = 0.4138 $
 
-$ P(E) = P(Juist) * P(Onjuist) = 0.12$
-
-$ P(H|E) = P(E) / P(H) = 0.4137 $
-
-De kans is 41.37%
-
+De kans is 41.38%
 
 ### Opgave 2: MARS ROBOT
 
