@@ -76,10 +76,11 @@ def transition_model(state):
     return distr_next_states
 
 def get_next_state(distr_next_states):
-    samples = []
-    for state, prob in distr_next_states.items():
-        samples += [state] * int(10 * prob)
-    return random.choice(samples)
+    return random.choices(
+        population=list(distr_next_states.keys()),
+        weights=list(distr_next_states.values()),
+        k=1
+    )[0]
 
 def observation_model(state):
     # given a state, return the distribution for its observations = positions
