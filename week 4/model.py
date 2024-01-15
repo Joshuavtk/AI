@@ -76,8 +76,10 @@ def transition_model(state):
     return distr_next_states
 
 def get_next_state(distr_next_states):
-    # Sample the next state based on the probability distribution
-    return max(distr_next_states.keys(), key=lambda k: distr_next_states[k])
+    samples = []
+    for state, prob in distr_next_states.items():
+        samples += [state] * int(10 * prob)
+    return random.choice(samples)
 
 def observation_model(state):
     # given a state, return the distribution for its observations = positions
@@ -181,22 +183,15 @@ def load_data(filename):
 def move_robot (app, start):
     # plot a fully random path for demonstration
     # start[0]=x and start[1]=y
-    prev = start
-    for i in range(100):
-        dir = random.choice(['L', 'R', 'U', 'D'])
-        match dir:
-            case 'L': current = prev[0]-1, prev[1]
-            case 'R': current = prev[0]+1, prev[1]
-            case 'D': current = prev[0], prev[1]-1
-            case 'U': current = prev[0], prev[1]+1
-
-        # check if new position is valid
-        if (current[0] >= 0 and current[0] <= cf.SIZE-1 and current[1] >= 0 and current[1] <= cf.SIZE-1):
-            app.plot_line_segment(prev[0], prev[1], current[0], current[1], color=cf.ROBOT_C)
-            app.pause()
-            app.plot_line_segment(prev[0], prev[1], current[0], current[1], color=cf.PATH_C)
-            prev = current
-            app.pause()
+    prev = start + tuple('S')
+    for _ in range(100):
+        dist = transition_model(prev)
+        current = get_next_state(dist)
+        app.plot_line_segment(prev[0], prev[1], current[0], current[1], color=cf.ROBOT_C)
+        app.pause()
+        app.plot_line_segment(prev[0], prev[1], current[0], current[1], color=cf.PATH_C)
+        prev = current
+        app.pause()
 
     app.plot_node(current, color=cf.ROBOT_C)
 
