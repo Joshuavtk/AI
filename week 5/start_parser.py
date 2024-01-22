@@ -49,20 +49,32 @@ def main():
     slist[9] = "En als ze klaar zijn, wil Jip direct weer met de trein gaan spelen."
 
     TERMINALS = """
-    N -> "jip" | "moeder" | "janneke" | "takkie" | "brandweerauto" | "staart" | "pootjes" | "slaapkamer"
-    V -> "roept" | "spelen" | "valt" | "loopt" | "komt" | "heeft" | "kijkt"
-    Con -> "en"
-    Det -> "de"
-    P -> "in"
-    Adj -> "grote" | "rode"
+    N -> "jip" | "moeder" | "janneke" | "takkie" | "brandweerauto" | "staart" | "pootjes" | "slaapkamer" | "keukentrap" | "hij" | "slee" | "jongetjes" | "hondjes" | "raam" | "morgen" | "trein" | "ze"
+    V -> "roept" | "spelen" | "valt" | "loopt" | "komt" | "heeft" | "kijkt" | "is" | "gezien" | "kijkt" | "wil" | "gaan" | "zijn"
+    Con -> "en" | "dan" | "nadat" | "voordat" | "als"
+    Det -> "de" | "het" | "een" | "zijn" | "twee"
+    P -> "in" | "tussen" | "met" | "uit"
+    Adj -> "grote" | "rode" | "voorzichtig" | "volgende" | "klaar"
+    Adv -> "heel" | "bijna" | "overboord" | "weg" | "voorbij" | "nu" | "er" | "terug"  | "erop" | "ervoor" | "morgen" | "direct" | "weer"
     """
 
     NONTERMINALS = """
-    S -> NP VP
-    VP -> V | V NP | V PP
+    S -> NP VP | VP VP | Con S
     PP -> P NP
-    NP -> N | Det N | N Con N
+    VP -> V | V NP | VP PP | VP V | S V | V NP PP
+    NP -> N | Det Nom | NP Con NP | Adv NP | NP Adv | Adv NP | NP Adj | Adv
+    Nom -> N | Adj Nom
     """
+
+
+    # Con Con N  Adj   V    V   N   Adv    Adv  P   Det N     V    V
+    # en  als ze klaar zijn wil jip direct weer met de  trein gaan spelen
+    # N = """
+    # S -> NP VP
+    # PP -> P NP
+    # VP -> V | V VP | VP PP
+    # NP -> Adv | Adv NP | Con NP | Con
+    # """
 
     # parse CFG from strings
     grammar = nltk.CFG.fromstring(NONTERMINALS + TERMINALS)
@@ -72,6 +84,8 @@ def main():
     # # to show rules:
     # for p in grammar.productions():
     #    print(p)
+
+    count = [0 for x in range(10)]
 
     for i,s in enumerate(slist):
         print(s)
@@ -91,9 +105,12 @@ def main():
         for tree in trees:
             tree.pretty_print()
 
+            count[i] += 1
+
             print("Noun Phrase Chunks")
             for np in np_chunk(tree):
                 print(" ".join(np.flatten()))
 
+    print("aantal runs", count, sum(count))
 if __name__ == "__main__":
     main()
