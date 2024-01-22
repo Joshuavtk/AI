@@ -1,12 +1,16 @@
 import nltk
 import sys
+import string
 
 def preprocess(sentence):
     """
     Convert `sentence` to a list of its words. Pre-process sentence by converting all characters
     to lowercase and removing any word that does not contain at least one alphabetic character.
     """
-    pass
+    words = nltk.word_tokenize(sentence.lower())
+    words_without_punctuation = [word for word in words if any(c.isalpha() for c in word)]
+    words_without_punctuation = [''.join(c for c in word if c not in string.punctuation) for word in words_without_punctuation]
+    return [word for word in words_without_punctuation if word]
 
 
 def np_chunk(tree):
@@ -15,7 +19,20 @@ def np_chunk(tree):
     as any subtree of the sentence whose label is "NP" that does not itself contain any other
     noun phrases as subtrees.
     """
-    pass
+    def is_np_chunk(t):
+        if t.label() != 'NP':
+            return False
+        
+        result = True
+        for s in t.subtrees():
+            if t == s:
+                continue
+            
+            result &= not is_np_chunk(s)
+
+        return result
+
+    return [subtree for subtree in tree.subtrees() if is_np_chunk(subtree)]
 
 def main():
 
@@ -32,14 +49,19 @@ def main():
     slist[9] = "En als ze klaar zijn, wil Jip direct weer met de trein gaan spelen."
 
     TERMINALS = """
-    N -> "jip" | "moeder"
-    V -> "roept"
+    N -> "jip" | "moeder" | "janneke" | "takkie" | "brandweerauto" | "staart" | "pootjes" | "slaapkamer"
+    V -> "roept" | "spelen" | "valt" | "loopt" | "komt" | "heeft" | "kijkt"
+    Con -> "en"
+    Det -> "de"
+    P -> "in"
+    Adj -> "grote" | "rode"
     """
 
     NONTERMINALS = """
     S -> NP VP
-    VP -> V | V NP
-    NP -> N
+    VP -> V | V NP | V PP
+    PP -> P NP
+    NP -> N | Det N | N Con N
     """
 
     # parse CFG from strings
@@ -47,9 +69,9 @@ def main():
     parser = nltk.ChartParser(grammar)
 
     # nltk.ChartParser(grammar, trace=2) # debug
-    # to show rules:
+    # # to show rules:
     # for p in grammar.productions():
-    #    print(p).
+    #    print(p)
 
     for i,s in enumerate(slist):
         print(s)
