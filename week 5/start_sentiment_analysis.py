@@ -41,7 +41,7 @@ accuracy = nltk.classify.util.accuracy(classifier, features_test)
 print("Accuracy:", accuracy, "\n")
 
 # show the 20 most informative features
-features = classifier.show_most_informative_features(20)
+classifier.show_most_informative_features(20)
 
 # sample input reviews
 input_reviews = [
