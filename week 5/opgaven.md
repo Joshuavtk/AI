@@ -1,6 +1,6 @@
 ### Opgave 1
 
-
+Zie [start_parser.py](start_parser.py)
 
 ### Opgave 2
 
@@ -16,6 +16,8 @@ e) Aan de hand van het vorige woord of woorden wordt er een gewogen willekeurige
 
 ### Opgave 3
 
-
+Zie [start_sentiment_analysis.py](start_sentiment_analysis.py)
 
 ### Opgave 4
+
+Zie [start_questions.py](start_questions.py)

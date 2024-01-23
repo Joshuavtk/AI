@@ -9,7 +9,7 @@ SENTENCE_MATCHES = 1    # nr of sentences used for the answer
 
 def main():
 
-    files = load_files("corpus")
+    files = load_files("texts")
     file_words = {
         filename: tokenize(files[filename])
         for filename in files
@@ -98,6 +98,16 @@ def compute_idfs(documents):
     count_docs_have_word = dict()
 
     # your code
+    for doc, words in documents.items():
+        for word in words:
+            if word not in count_docs_have_word:
+                count_docs_have_word[word] = set()
+            count_docs_have_word[word].add(doc)
+
+    word_idfs = dict()
+    for word, document_names in count_docs_have_word.items():
+        document_count = len(document_names)
+        word_idfs[word] = math.log(num_docs / document_count)
 
     return word_idfs
 
@@ -115,6 +125,12 @@ def top_files(query, files, idfs, n):
     file_scores = {filename:0 for filename in files}
 
     # your code
+    for filename, word_list in files.items():
+        for word in word_list:
+            if word in query:
+                file_scores[filename] += 1 * idfs[word]
+    
+    sorted_files = sorted(files, key=lambda filename: file_scores[filename], reverse=True)
 
     # return best n files
     return sorted_files[:n]
@@ -131,7 +147,19 @@ def top_sentences(query, sentences, idfs, n):
     # dict to score sentences:
     sentence_score = {sentence:{'idf_score': 0, 'length':0, 'query_words':0, 'qtd_score':0} for sentence in sentences}
 
+
     # your code
+    for sentence, word_list in sentences.items():
+        word_count = 0
+        for word in word_list:
+            if word in query:
+                word_count += 1
+
+        sentence_score[sentence]["idf_score"] = sum([idfs[word] for word in query if word in sentence])
+        sentence_score[sentence]["query_words"] = sum([1 for word in query if word in sentence])
+        sentence_score[sentence]["length"] = len(sentence.split())
+        sentence_score[sentence]["qtd_score"] = word_count / sentence_score[sentence]["length"]
+
 
     # example: Query: jip
     # sentence_score:

@@ -3,7 +3,7 @@ import json
 import markovify
 
 # read text from file
-f = open('texts/Nescio-de-Uitvreter.txt', 'r')
+f = open('Nescio-de-Uitvreter.txt', 'r')
 text = f.read()
 
 # train and print model for n=2
