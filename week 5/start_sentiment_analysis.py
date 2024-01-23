@@ -31,11 +31,17 @@ features_train = features_positive[:threshold_positive]+features_negative[:thres
 features_test = features_positive[threshold_positive:]+features_negative[threshold_negative:]
 
 print("Number of training datapoints: ", len(features_train))
-print("Number of test datapoints: ", len(features_test)) 
+print("Number of test datapoints: ", len(features_test), "\n")
 
 # train the NaiveBayesClassifier
+classifier = NaiveBayesClassifier.train(features_train)
+
 # print accuracy of classifier
+accuracy = nltk.classify.util.accuracy(classifier, features_test)
+print("Accuracy:", accuracy, "\n")
+
 # show the 20 most informative features
+features = classifier.show_most_informative_features(20)
 
 # sample input reviews
 input_reviews = [
@@ -51,7 +57,14 @@ input_reviews = [
     "I don't recommend watching this at all!"
 ]
 
-print("Predictions: ")
+print("Predictions:")
 
 for review in input_reviews:
-    # print pos or negative, together with the probability
+    word_list = review.split()
+    review_features = extract_features(word_list)
+    classification_result = classifier.classify(review_features)
+    probabilities = classifier.prob_classify(review_features)
+
+    print(f"Review: \"{review}\"")
+    print(f"Classification: {classification_result}")
+    print(f"Probability: Positive: {probabilities.prob('Positive'):.2f}, Negative: {probabilities.prob('Negative'):.2f}\n")
